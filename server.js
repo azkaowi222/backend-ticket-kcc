@@ -5,10 +5,6 @@ import userRoutes from "./routes/userRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
 import ticketRoutes from "./routes/ticketRoutes.js";
-import Order from "./models/Order.js";
-import Payment from "./models/Payment.js";
-import Ticket from "./models/Ticket.js";
-import User from "./models/User.js";
 import cors from "cors";
 import "dotenv/config";
 import "./jobs/cancelExpiredOrders.js";
@@ -49,35 +45,39 @@ app.use("/api/orders", orderRoutes);
 app.use("/api/webhook", webhookRoutes);
 app.use("/api/tickets", ticketRoutes);
 
-app.delete("/delete", async (req, res) => {
-  try {
-    // await Payment.collection.dropIndex("order_id_1");
-    await Promise.all([
-      Order.deleteMany({}),
-      Payment.deleteMany({}),
-      Ticket.deleteMany({}),
-      User.deleteMany({}),
-    ]);
+// app.delete("/delete", async (req, res) => {
+//   try {
+//     // await Payment.collection.dropIndex("order_id_1");
+//     await Promise.all([
+//       Order.deleteMany({}),
+//       Payment.deleteMany({}),
+//       Ticket.deleteMany({}),
+//       User.deleteMany({}),
+//     ]);
 
-    return res.status(200).json({
-      success: true,
-      message: "Database berhasil dibersihkan.",
-    });
-  } catch (error) {
-    return res.status(500).json({
-      success: false,
-      message: "Gagal membersihkan database.",
-      error: error.message,
-    });
-  }
-});
+//     return res.status(200).json({
+//       success: true,
+//       message: "Database berhasil dibersihkan.",
+//     });
+//   } catch (error) {
+//     return res.status(500).json({
+//       success: false,
+//       message: "Gagal membersihkan database.",
+//       error: error.message,
+//     });
+//   }
+// });
 
-app.get("/orders", async (req, res) => {
-  const orders = await Payment.find().populate("order").lean();
-  return res.status(200).json({
-    status: 200,
-    data: orders,
-  });
+// app.get("/orders", async (req, res) => {
+//   const orders = await Payment.find().populate("order").lean();
+//   return res.status(200).json({
+//     status: 200,
+//     data: orders,
+//   });
+// });
+
+app.get("/healtcheck", async (req, res) => {
+  return res.status(200).send("OK");
 });
 
 mongoose

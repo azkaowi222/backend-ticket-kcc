@@ -48,12 +48,12 @@ jobs:
         with:
           name: node-app
       
-      - name: Login to Azure
-        uses: azure/login@v2
+      - name: Deploy to Azure Web App
+        uses: azure/webapps-deploy@v3
         with:
-          client-id: ${{ secrets.AZUREAPPSERVICE_CLIENTID_9029C29E81994095A7F9EB175F6FFA65 }}
-          tenant-id: ${{ secrets.AZUREAPPSERVICE_TENANTID_2D8D56AD0D6E4CE89A2CADA7413E6B91 }}
-          subscription-id: ${{ secrets.AZUREAPPSERVICE_SUBSCRIPTIONID_A42CB1B61EBE451F80913C608EBAA5FE }}
+          app-name: backend-ticket-kcc
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: .
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp

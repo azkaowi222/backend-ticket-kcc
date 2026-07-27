@@ -1,6 +1,17 @@
 import User from "../models/User.js";
 import bcrypt from "bcryptjs";
+import { cert, initializeApp } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import jwt from "jsonwebtoken";
+import "dotenv/config";
+
+initializeApp({
+  credential: cert({
+    projectId: process.env.PROJECT_ID,
+    privateKey: process.env.PRIVATE_KEY.replace(/\\n/g, "\n"),
+    clientEmail: process.env.CLIENT_EMAIL,
+  }),
+});
 
 // Endpoint Register
 export const register = async (req, res) => {
@@ -24,11 +35,11 @@ export const register = async (req, res) => {
 
     await newUser.save();
 
-    res
+    return res
       .status(201)
       .json({ message: "Registrasi berhasil", userId: newUser._id });
   } catch (error) {
-    res
+    return res
       .status(500)
       .json({ message: "Terjadi kesalahan pada server", error: error.message });
   }
@@ -55,7 +66,7 @@ export const login = async (req, res) => {
       { expiresIn: "1d" },
     );
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Login berhasil",
       token,
       user: {
@@ -67,9 +78,69 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    res
+    return res
       .status(500)
       .json({ message: "Terjadi kesalahan pada server", error: error.message });
+  }
+};
+
+export const loginWithGoogle = async (req, res) => {
+  try {
+    const { idToken } = req.body;
+    if (!idToken) {
+      return res.status(400).json({
+        message: "Firebase ID token wajib dikirim.",
+      });
+    }
+
+    const decodedToken = await getAuth().verifyIdToken(idToken);
+    const userIsExist = await User.findOne({
+      email: decodedToken.email,
+    });
+
+    let user;
+
+    if (userIsExist) {
+      userIsExist.email = decodedToken.email;
+      userIsExist.username = decodedToken.name;
+      userIsExist.phone = decodedToken.phone_number ?? null;
+      userIsExist.provider = "google";
+      await userIsExist.save();
+    } else {
+      user = await User.create({
+        email: decodedToken.email,
+        phone: decodedToken.phone_number ?? null,
+        username: decodedToken.name ?? decodedToken.email.split("@")[0],
+        provider: "google",
+      });
+    }
+
+    const token = jwt.sign(
+      {
+        id: userIsExist ? userIsExist._id : user._id,
+        email: decodedToken.email,
+      },
+      process.env.JWT_SECRET,
+      { expiresIn: "1d" },
+    );
+    return res.status(200).json({
+      status: 200,
+      message: "Berhasil login google",
+      token,
+      user: {
+        id: decodedToken.user_id,
+        username: decodedToken.name ?? decodedToken.email.split("@")[0],
+        email: decodedToken.email,
+        phone: user?.phone ?? userIsExist?.phone,
+        role: "user",
+      },
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Terjadi kesalahan pada server",
+      error: error.message,
+      stack: error.stack,
+    });
   }
 };
 

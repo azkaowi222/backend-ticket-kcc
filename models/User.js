@@ -15,7 +15,9 @@ const userSchema = new mongoose.Schema(
     },
     password: {
       type: String,
-      required: [true, "Password wajib diisi"],
+      required: function () {
+        return this.provider === "email";
+      },
       minlength: 6,
       select: false,
     },
@@ -30,6 +32,12 @@ const userSchema = new mongoose.Schema(
       enum: ["user", "admin"],
       default: "user",
       required: true,
+    },
+    provider: {
+      type: String,
+      required: true,
+      enum: ["email", "google"],
+      default: "email",
     },
   },
   { timestamps: true },

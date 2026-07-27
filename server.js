@@ -5,40 +5,12 @@ import userRoutes from "./routes/userRoutes.js";
 import orderRoutes from "./routes/orderRoutes.js";
 import webhookRoutes from "./routes/webhookRoutes.js";
 import ticketRoutes from "./routes/ticketRoutes.js";
-import cors from "cors";
 import "dotenv/config";
 import "./jobs/cancelExpiredOrders.js";
 
 const app = express();
 
 app.use(express.json());
-const allowedOrigins = ["https://domain-production-anda.com"];
-
-const corsOptions = {
-  origin: (origin, callback) => {
-    // Mengizinkan Postman, aplikasi mobile, atau request tanpa Origin
-    if (!origin) {
-      return callback(null, true);
-    }
-
-    const isLocalhost = /^http:\/\/localhost:\d+$/.test(origin);
-    const isAllowedProduction = allowedOrigins.includes(origin);
-
-    if (isLocalhost || isAllowedProduction) {
-      return callback(null, true);
-    }
-
-    return callback(new Error(`Origin ${origin} tidak diizinkan oleh CORS`));
-  },
-
-  methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-
-  allowedHeaders: ["Content-Type", "Authorization"],
-
-  credentials: true,
-};
-app.use(cors(corsOptions));
-
 app.use("/api/auth", authRoutes);
 app.use("/api/users", userRoutes);
 app.use("/api/orders", orderRoutes);

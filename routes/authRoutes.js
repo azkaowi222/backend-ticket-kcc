@@ -1,5 +1,10 @@
 import express from "express";
-import { register, login, logout } from "../controllers/authController.js";
+import {
+  register,
+  login,
+  logout,
+  loginWithGoogle,
+} from "../controllers/authController.js";
 import { optionalAuth } from "../middlewares/authMiddleware.js";
 
 const router = express.Router();
@@ -9,6 +14,7 @@ router.post("/register", register);
 
 // Route POST /api/auth/login
 router.post("/login", login);
+router.post("/login/google", loginWithGoogle);
 
 router.post("/logout", optionalAuth, logout);
 

@@ -4,6 +4,8 @@ import { cert, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import jwt from "jsonwebtoken";
 import "dotenv/config";
+import generateSecureOTP from "../utils/generateOtp.js";
+import { sendVerificationEmail } from "../services/emailService.js";
 
 initializeApp({
   credential: cert({
@@ -25,12 +27,16 @@ export const register = async (req, res) => {
 
     const salt = await bcrypt.genSalt(10);
     const hashedPassword = await bcrypt.hash(password, salt);
-
+    const otp = generateSecureOTP();
+    await sendVerificationEmail(email, otp);
+    const otpExpiredAt = new Date(Date.now() + 5 * 60 * 1000);
     const newUser = new User({
       username: username ?? email.split("@")[0],
       email,
       password: hashedPassword,
       phone,
+      email_otp: otp,
+      email_otp_expired: otpExpiredAt,
     });
 
     await newUser.save();
@@ -141,6 +147,87 @@ export const loginWithGoogle = async (req, res) => {
       error: error.message,
       stack: error.stack,
     });
+  }
+};
+
+export const verifyEmail = async (req, res) => {
+  try {
+    const { email, otp } = req.body;
+    if (!email || !otp) {
+      return res.status(400).json({
+        status: 400,
+        message: "Field email atau otp harus diisi",
+      });
+    }
+
+    const user = await User.findOne({
+      email,
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 404,
+        message: "user tidak ditemukan",
+      });
+    }
+
+    if (user.email_otp != otp) {
+      return res.status(400).json({
+        status: 400,
+        message: "Otp tidak valid",
+      });
+    }
+
+    const now = new Date();
+    const isOtpExpired = now > user.email_otp_expired;
+
+    if (isOtpExpired) {
+      return res.status(400).json({
+        status: 400,
+        message: "Otp telah expired",
+      });
+    }
+    user.is_email_verified = true;
+    await user.save();
+    return res.status(200).json({
+      status: 200,
+      message: "Email berhasil diverifikasi",
+    });
+  } catch (error) {
+    return res.status(500).json({
+      message: "Terjadi kesalahan pada server",
+      error: error.message,
+      stack: error.stack,
+    });
+  }
+};
+
+export const resendOtp = async (req, res) => {
+  const { email } = req.body;
+  try {
+    const user = await User.findOne({
+      email,
+    });
+
+    if (!user) {
+      return res.status(404).json({
+        status: 404,
+        message: "User tidak ditemukan",
+      });
+    }
+    const otp = generateSecureOTP();
+    await sendVerificationEmail(email, otp);
+    user.email_otp = otp;
+    user.email_otp_expired = new Date(Date.now() + 5 * 60 * 1000);
+    await user.save();
+    return res.status(200).json({
+      status: 200,
+      message: "Otp berhasil dikirim ulang",
+    });
+  } catch (error) {
+    res
+      .status(500)
+      .json({ message: "Terjadi kesalahan pada server", error: error.message });
   }
 };
 

@@ -66,6 +66,13 @@ export const login = async (req, res) => {
       return res.status(400).json({ message: "Email atau password salah" });
     }
 
+    if (!user.is_email_verified) {
+      return res.status(401).json({
+        status: 401,
+        message: "Email belum diverifikasi",
+      });
+    }
+
     const token = jwt.sign(
       { id: user._id, email: user.email },
       process.env.JWT_SECRET,
@@ -205,6 +212,12 @@ export const verifyEmail = async (req, res) => {
 export const resendOtp = async (req, res) => {
   const { email } = req.body;
   try {
+    if (!email) {
+      return res.status(400).json({
+        status: 400,
+        message: "Field email wajib diisi",
+      });
+    }
     const user = await User.findOne({
       email,
     });
@@ -225,7 +238,7 @@ export const resendOtp = async (req, res) => {
       message: "Otp berhasil dikirim ulang",
     });
   } catch (error) {
-    res
+    return res
       .status(500)
       .json({ message: "Terjadi kesalahan pada server", error: error.message });
   }
@@ -237,11 +250,11 @@ export const logout = async (req, res) => {
     // tidak ada session di database yang perlu dihapus.
     // Cukup kirimkan respons sukses ke client agar client menghapus tokennya.
 
-    res.status(200).json({
+    return res.status(200).json({
       message: "Berhasil logout, silakan hapus token di perangkat Anda.",
     });
   } catch (error) {
-    res
+    return res
       .status(500)
       .json({ message: "Terjadi kesalahan saat logout", error: error.message });
   }

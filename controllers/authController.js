@@ -58,13 +58,10 @@ export const login = async (req, res) => {
 
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
-      console.log("masuk ke !usee");
       return res.status(400).json({ message: "Email atau password salah" });
     }
-
-    const isMatch = await bcrypt.compare(password, user.password);
+    const isMatch = await bcrypt.compare(password, user.password ?? "");
     if (!isMatch) {
-      console.log("masuk ke ismatch");
       return res.status(400).json({ message: "Email atau password salah" });
     }
 
@@ -93,9 +90,11 @@ export const login = async (req, res) => {
       },
     });
   } catch (error) {
-    return res
-      .status(500)
-      .json({ message: "Terjadi kesalahan pada server", error: error.message });
+    return res.status(500).json({
+      message: "Terjadi kesalahan pada server",
+      error: error.message,
+      stack: error.stack,
+    });
   }
 };
 

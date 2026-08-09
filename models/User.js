@@ -34,11 +34,15 @@ const userSchema = new mongoose.Schema(
     },
     email_otp: {
       type: Number,
-      required: true,
+      required: function () {
+        return this.provider !== "google";
+      },
     },
     email_otp_expired: {
       type: Date,
-      required: true,
+      required: function () {
+        return this.provider !== "google";
+      },
     },
     role: {
       type: String,

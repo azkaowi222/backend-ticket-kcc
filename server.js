@@ -36,6 +36,7 @@ app.use("/api/tickets", ticketRoutes);
 //       success: false,
 //       message: "Gagal membersihkan database.",
 //       error: error.message,
+//       stack: error.stack,
 //     });
 //   }
 // });

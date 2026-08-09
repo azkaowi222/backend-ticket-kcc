@@ -5,7 +5,8 @@ import {
   logout,
   loginWithGoogle,
   verifyEmail,
-  resendOtp
+  resendOtp,
+  updatePassword,
 } from "../controllers/authController.js";
 import { optionalAuth } from "../middlewares/authMiddleware.js";
 
@@ -18,9 +19,12 @@ router.post("/register", register);
 router.post("/login", login);
 router.post("/login/google", loginWithGoogle);
 
-// POST verify email
+// POST, PATCH verify email
 router.post("/email/verify", verifyEmail);
 router.patch("/email/resend", resendOtp);
+
+//PATCH reset-password
+router.patch("/update-password", updatePassword);
 
 router.post("/logout", optionalAuth, logout);
 

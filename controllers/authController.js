@@ -58,11 +58,13 @@ export const login = async (req, res) => {
 
     const user = await User.findOne({ email }).select("+password");
     if (!user) {
-      return res.status(200).json({ message: "Email atau password salah" });
+      console.log("masuk ke !usee");
+      return res.status(400).json({ message: "Email atau password salah" });
     }
 
     const isMatch = await bcrypt.compare(password, user.password);
     if (!isMatch) {
+      console.log("masuk ke ismatch");
       return res.status(400).json({ message: "Email atau password salah" });
     }
 
@@ -236,6 +238,40 @@ export const resendOtp = async (req, res) => {
     return res.status(200).json({
       status: 200,
       message: "Otp berhasil dikirim ulang",
+    });
+  } catch (error) {
+    return res
+      .status(500)
+      .json({ message: "Terjadi kesalahan pada server", error: error.message });
+  }
+};
+
+export const updatePassword = async (req, res) => {
+  const { email, password } = req.body;
+  try {
+    if (!email || !password) {
+      return res.status(400).json({
+        status: 400,
+        message: "Field email wajib diisi",
+      });
+    }
+    const user = await User.findOne({
+      email,
+    }).select("+password");
+
+    if (!user) {
+      return res.status(404).json({
+        status: 404,
+        message: "User tidak ditemukan",
+      });
+    }
+    const salt = await bcrypt.genSalt(10);
+    const hashedPassword = await bcrypt.hash(password, salt);
+    user.password = hashedPassword;
+    await user.save();
+    return res.status(200).json({
+      status: 200,
+      message: "Password berhasil diupdate",
     });
   } catch (error) {
     return res

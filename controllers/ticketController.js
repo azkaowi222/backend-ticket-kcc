@@ -28,17 +28,6 @@ export const scanTicket = async (req, res) => {
       });
     }
 
-    const today = getToday();
-
-    const visitDate = getVisitDate(ticket.order.visit_date);
-
-    if (visitDate !== today) {
-      return res.status(400).json({
-        status: 400,
-        message: "Tiket tidak berlaku hari ini",
-      });
-    }
-
     ticket.ticket_status = "used";
     ticket.used_at = new Date();
 
@@ -98,12 +87,22 @@ export const useTicket = async (req, res) => {
     const { ticket_id } = req.params;
     const ticket = await Ticket.findOne({
       ticket_id,
-    });
+    }).populate("order");
 
     if (!ticket) {
       return res.status(200).json({
         status: 404,
         message: "Tiket tidak ditemukan",
+      });
+    }
+
+    const today = getToday();
+    const visitDate = getVisitDate(ticket.order.visit_date);
+
+    if (visitDate !== today) {
+      return res.status(400).json({
+        status: 400,
+        message: "Tiket tidak berlaku hari ini",
       });
     }
 
@@ -118,7 +117,7 @@ export const useTicket = async (req, res) => {
     return res.status(500).json({
       status: 500,
       message: "Terjadi kesalahan pada server",
-      error: error,
+      error: error.message,
     });
   }
 };
